@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MaketVPN</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+/* SPLASH */
+#splash{position:fixed;inset:0;background:#3a28c8;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:opacity 0.4s ease;}
+#splash.hide{opacity:0;pointer-events:none;}
+.splash-m{font-size:80px;font-weight:900;font-style:italic;color:#fff;position:absolute;animation:splashMOut 0.5s cubic-bezier(.75,0,.35,1) 1.2s forwards;}
+@keyframes splashMOut{0%{transform:translateX(0);opacity:1;}100%{transform:translateX(-130px);opacity:0;}}
+.splash-name{font-size:38px;font-weight:900;color:#fff;letter-spacing:1px;position:absolute;opacity:0;transform:translateX(80px);animation:splashNameIn 0.5s cubic-bezier(.15,0,.1,1) 1.5s forwards;}
+@keyframes splashNameIn{0%{transform:translateX(80px);opacity:0;}100%{transform:translateX(0);opacity:1;}}
+/* PRO SHIMMER */
+@keyframes proShimmer{0%{background-position:0% 50%;}100%{background-position:200% 50%;}}
+.pro-shimmer{background:linear-gradient(90deg,#b8860b 0%,#ffd700 25%,#fff8a0 50%,#ffd700 75%,#b8860b 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:proShimmer 2s linear infinite;font-weight:900;}
+:root{
+  --bg:#f0eeff;--bg-connected:#0d1b4b;--accent:#5b3ff8;--accent2:#7c5cfc;
+  --text:#1a1a2e;--text2:#666;--card:#fff;--border:#e0dcff;
+  --proto-bg:#e8e3ff;--menu-bg:#fff;--menu-text:#1a1a2e;--menu-sub:#888;
+  --sheet-bg:#fff;--sheet-title:#1a1a2e;--item-hover:#f5f3ff;
+  --gold:#ffd700;--gold2:#c8960a;
+}
+body.night{
+  --bg:#181830;--text:#e8e6ff;--text2:#aaa8cc;--card:#232347;--border:#3a3860;
+  --proto-bg:#2a2850;--menu-bg:#232347;--menu-text:#e8e6ff;--menu-sub:#aaa8cc;
+  --sheet-bg:#232347;--sheet-title:#e8e6ff;--item-hover:#2e2c55;
+  --gold2:#ffd700;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;transition:background 0.7s ease;overflow-x:hidden;}
+body.connected{background:var(--bg-connected)!important;}
+.phone{width:100%;max-width:420px;min-height:100vh;display:flex;flex-direction:column;padding-bottom:32px;position:relative;}
+.version-badge{position:absolute;top:8px;left:12px;font-size:10px;font-weight:700;color:var(--accent);opacity:0.7;z-index:5;letter-spacing:0.4px;transition:color 0.4s;}
+body.connected .version-badge{color:rgba(255,255,255,0.4);}
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;padding:22px 20px 14px;}
+.logo-box{display:flex;align-items:center;gap:7px;background:var(--card);border:2px solid var(--accent);border-radius:14px;padding:8px 14px;transition:background 0.7s,border-color 0.7s;}
+body.connected .logo-box{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);}
+.logo-m{font-size:22px;font-weight:900;color:var(--accent);font-style:italic;}
+.logo-text{font-size:16px;font-weight:700;color:var(--text);transition:color 0.7s;}
+body.connected .logo-text{color:#fff;}
+.header-right{display:flex;align-items:center;gap:9px;}
+.ext-btn{width:46px;height:46px;border-radius:14px;background:rgba(91,63,248,0.1);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;transition:background 0.2s,border-color 0.2s;}
+.ext-btn:hover{background:rgba(91,63,248,0.2);border-color:var(--accent);}
+body.connected .ext-btn{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2);}
+.header-menu{width:46px;height:46px;border-radius:14px;background:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:background 0.2s;}
+.header-menu:hover{background:var(--accent2);}
+.hline{width:20px;height:2px;background:#fff;border-radius:2px;}
+/* SIDE MENU */
+.menu-overlay{display:none;position:fixed;inset:0;z-index:300;}
+.menu-overlay.open{display:flex;}
+.menu-scrim{position:absolute;inset:0;background:rgba(0,0,0,0.38);}
+.menu-panel{position:absolute;right:0;top:0;bottom:0;width:82%;max-width:310px;background:var(--menu-bg);display:flex;flex-direction:column;animation:slideL 0.28s cubic-bezier(.4,0,.2,1);overflow-y:auto;transition:background 0.4s;}
+@keyframes slideL{from{transform:translateX(100%);}to{transform:translateX(0);}}
+.menu-header{padding:32px 22px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+.menu-logo-m{font-size:28px;font-weight:900;color:var(--accent);font-style:italic;}
+.menu-logo-text{font-size:18px;font-weight:800;color:var(--menu-text);transition:color 0.4s;}
+.menu-item{display:flex;align-items:center;gap:14px;padding:15px 22px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;}
+.menu-item:hover{background:var(--item-hover);}
+.menu-item-icon{width:38px;height:38px;border-radius:10px;background:var(--proto-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:background 0.4s;}
+.menu-item-text{flex:1;}
+.menu-item-label{font-size:14px;font-weight:700;color:var(--menu-text);transition:color 0.4s;}
+.menu-item-sub{font-size:12px;color:var(--menu-sub);margin-top:1px;transition:color 0.4s;}
+.menu-item-arrow{font-size:18px;color:var(--menu-sub);}
+.theme-row{display:flex;align-items:center;gap:14px;padding:15px 22px;border-bottom:1px solid var(--border);}
+.theme-logo-wrap{width:38px;height:38px;border-radius:10px;background:var(--proto-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.4s;}
+.theme-logo-m{font-size:20px;font-weight:900;color:var(--accent);font-style:italic;}
+.theme-label{font-size:14px;font-weight:700;color:var(--menu-text);flex:1;transition:color 0.4s;}
+.pill-toggle{width:54px;height:28px;border-radius:14px;background:#ddd;position:relative;cursor:pointer;transition:background 0.3s;flex-shrink:0;}
+.pill-toggle.on{background:var(--accent);}
+.pill-knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:left 0.25s cubic-bezier(.4,0,.2,1);}
+.pill-toggle.on .pill-knob{left:29px;}
+.pill-icons{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 6px;pointer-events:none;}
+.pill-sun,.pill-moon{font-size:11px;}
+.menu-ip-row{padding:13px 22px;border-bottom:1px solid var(--border);}
+.menu-ip-label{font-size:11px;font-weight:700;color:var(--menu-sub);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;}
+.menu-ip-val{font-size:13px;font-weight:600;color:var(--menu-text);transition:color 0.4s;}
+/* LOCATION BANNER */
+.banner{margin:0 20px;border-radius:18px;padding:16px 18px;background:var(--card);box-shadow:0 2px 18px rgba(91,63,248,0.09);transition:background 0.7s,box-shadow 0.7s;min-height:108px;}
+body.connected .banner{background:rgba(255,255,255,0.1);box-shadow:0 2px 18px rgba(0,0,0,0.28);}
+.banner-off{display:flex;width:100%;align-items:center;justify-content:space-between;}
+.banner-on{display:none;width:100%;flex-direction:column;gap:10px;}
+.loc-label{font-size:13px;color:var(--text2);font-weight:500;transition:color 0.7s;}
+body.connected .loc-label{color:rgba(255,255,255,0.55);}
+.loc-country{display:flex;align-items:center;gap:6px;font-size:20px;font-weight:800;color:var(--text);transition:color 0.7s;border:2px solid var(--accent);border-radius:10px;padding:3px 8px;cursor:pointer;user-select:none;background:rgba(91,63,248,0.06);margin-top:4px;}
+body.connected .loc-country{color:#fff;border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.07);}
+.loc-country-connected{display:flex;align-items:center;gap:6px;font-size:22px;font-weight:900;color:#fff;margin-top:4px;}
+.ping-list{display:flex;flex-direction:column;gap:3px;}
+.ping-item{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text);transition:color 0.7s,background 0.15s;cursor:pointer;border-radius:6px;padding:1px 4px;}
+.ping-item:hover{background:var(--item-hover);}
+body.connected .ping-item{color:rgba(255,255,255,0.8);}
+.ping-item.pro-country span{color:var(--gold2);font-weight:700;}
+.flag-img{width:22px;height:16px;object-fit:cover;border-radius:3px;flex-shrink:0;}
+.ping-box{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:9px 18px;font-size:16px;font-weight:700;color:var(--text);text-align:center;width:100%;transition:background 0.7s,color 0.7s,border-color 0.7s;}
+body.connected .ping-box{background:rgba(255,255,255,0.15);color:#fff;border-color:transparent;}
+/* POWER */
+.power-area{display:flex;flex-direction:column;align-items:center;padding:28px 0 12px;}
+.rings-container{position:relative;width:240px;height:240px;display:flex;align-items:center;justify-content:center;}
+.ring{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(91,63,248,0.17) 0%,rgba(91,63,248,0.05) 60%,transparent 100%);}
+.ring-1{width:240px;height:240px;animation:pulse-ring 3s ease-in-out infinite;}
+.ring-2{width:188px;height:188px;animation:pulse-ring 3s ease-in-out infinite 0.45s;}
+.ring-3{width:148px;height:148px;animation:pulse-ring 3s ease-in-out infinite 0.9s;}
+@keyframes pulse-ring{0%,100%{transform:scale(1);opacity:0.65;}50%{transform:scale(1.07);opacity:1;}}
+.ring-1.searching{animation:spin1 0.85s linear infinite;background:conic-gradient(from 0deg,rgba(91,63,248,0.65),rgba(91,63,248,0.04),rgba(91,63,248,0.65));}
+.ring-2.searching{animation:spin2 1.1s linear infinite reverse;background:conic-gradient(from 120deg,rgba(124,92,252,0.55),rgba(124,92,252,0.04),rgba(124,92,252,0.55));}
+.ring-3.searching{animation:spin3 0.65s linear infinite;background:conic-gradient(from 240deg,rgba(150,110,255,0.45),rgba(150,110,255,0.04),rgba(150,110,255,0.45));}
+@keyframes spin1{to{transform:rotate(360deg) scale(1.05);}}
+@keyframes spin2{to{transform:rotate(360deg) scale(1.02);}}
+@keyframes spin3{to{transform:rotate(360deg) scale(1);}}
+.power-btn{width:112px;height:112px;border-radius:50%;background:var(--card);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;z-index:10;box-shadow:0 4px 28px rgba(91,63,248,0.2);transition:transform 0.15s,box-shadow 0.3s,background 0.7s;}
+.power-btn:hover{transform:scale(1.05);box-shadow:0 8px 36px rgba(91,63,248,0.32);}
+.power-btn:active{transform:scale(0.96);}
+body.connected .power-btn{background:rgba(255,255,255,0.13);}
+.power-svg{width:58px;height:58px;}
+.power-svg .arc{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke 0.7s;}
+.power-svg .stem{fill:var(--accent);transition:fill 0.7s;}
+body.connected .power-svg .arc{stroke:rgba(255,255,255,0.75);}
+body.connected .power-svg .stem{fill:rgba(255,255,255,0.75);}
+.status-line{margin-top:14px;display:flex;align-items:center;gap:9px;min-height:28px;}
+.status-text{font-size:14px;font-weight:800;letter-spacing:1px;color:var(--accent);text-transform:uppercase;transition:color 0.7s;}
+body.connected .status-text{color:rgba(255,255,255,0.9);}
+.spinner{display:none;width:21px;height:21px;animation:rspin 0.75s linear infinite;}
+.spinner.visible{display:block;}
+@keyframes rspin{to{transform:rotate(360deg);}}
+.spinner circle{stroke:var(--accent);stroke-dasharray:48;stroke-dashoffset:14;stroke-linecap:round;}
+/* FREE PROTOCOLS */
+.protocol-wrap{margin:10px 20px 0;background:var(--proto-bg);border-radius:14px;padding:5px;position:relative;display:flex;transition:background 0.7s;user-select:none;}
+body.connected .protocol-wrap{background:rgba(255,255,255,0.1);}
+.proto-slider{position:absolute;top:5px;bottom:5px;width:calc(33.33% - 3px);background:var(--accent);border-radius:10px;box-shadow:0 2px 10px rgba(91,63,248,0.35);transition:left 0.25s cubic-bezier(.4,0,.2,1);left:5px;pointer-events:none;}
+.proto-btn{flex:1;padding:10px 4px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;background:transparent;color:var(--text2);position:relative;z-index:1;transition:color 0.2s;}
+.proto-btn.active{color:#fff;}
+body.connected .proto-btn{color:rgba(255,255,255,0.5);}
+body.connected .proto-btn.active{color:#fff;}
+/* PRO PROTOCOLS */
+.pro-proto-header{display:flex;align-items:center;justify-content:space-between;margin:10px 20px 0;padding:0 2px;}
+.pro-proto-label{font-size:11px;font-weight:800;background:linear-gradient(90deg,#c8a800,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;}
+.pro-proto-status{font-size:11px;font-weight:700;color:var(--gold2);transition:color 0.3s;}
+.protocol-wrap-pro{margin:4px 20px 0;background:rgba(200,168,0,0.1);border:1.5px solid rgba(200,168,0,0.3);border-radius:14px;padding:5px;position:relative;display:flex;user-select:none;transition:background 0.4s,border-color 0.4s;}
+.pro-slider{position:absolute;top:5px;bottom:5px;width:calc(33.33% - 3px);background:linear-gradient(135deg,#b8900a,#ffd700,#e8b800);border-radius:10px;box-shadow:0 2px 12px rgba(200,168,0,0.5);transition:left 0.25s cubic-bezier(.4,0,.2,1);left:5px;pointer-events:none;}
+.pro-proto-btn{flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--gold2);position:relative;z-index:1;transition:color 0.2s,opacity 0.3s;}
+.pro-proto-btn.active{color:#1a1200;}
+.pro-proto-btn.locked{opacity:0.5;}
+/* BRAND */
+.brand-row{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 0 6px;}
+.brand-m{font-size:28px;font-weight:900;color:var(--accent);font-style:italic;transition:color 0.7s;}
+.brand-name{font-size:21px;font-weight:800;color:var(--text);transition:color 0.7s;}
+body.connected .brand-m,body.connected .brand-name{color:rgba(255,255,255,0.4);}
+/* PRO BANNER */
+.pro-banner{margin:0 20px;background:var(--accent);border-radius:18px;padding:17px 20px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;}
+.pro-banner:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(91,63,248,0.42);}
+.pro-icon{font-size:26px;font-weight:900;color:rgba(255,255,255,0.45);font-style:italic;}
+.pro-info{flex:1;}
+.pro-title{font-size:16px;font-weight:800;color:#fff;}
+.pro-price{font-size:13px;color:rgba(255,255,255,0.7);margin-top:2px;}
+.pro-price span{color:#ffd700;font-weight:800;}
+.pro-arrow{font-size:24px;color:#fff;}
+/* PRO ACTIVE BADGE */
+.pro-active-badge{display:none;margin:0 20px;background:linear-gradient(135deg,#b8900a,#ffd700,#e8b800);border-radius:18px;padding:14px 20px;align-items:center;gap:12px;}
+.pro-active-badge.show{display:flex;}
+.pro-active-text{font-size:14px;font-weight:800;color:#1a1200;flex:1;}
+.pro-active-sub{font-size:11px;font-weight:700;color:rgba(26,18,0,0.65);}
+/* SPEED BANNER */
+.speed-banner{margin:12px 20px 0;border-radius:18px;padding:18px 18px 20px;background:var(--card);box-shadow:0 2px 18px rgba(91,63,248,0.09);transition:background 0.7s,box-shadow 0.7s;cursor:pointer;overflow:hidden;position:relative;}
+body.connected .speed-banner{background:rgba(255,255,255,0.08);box-shadow:0 2px 18px rgba(0,0,0,0.22);}
+.speed-shine{position:absolute;inset:0;background:linear-gradient(135deg,rgba(91,63,248,0.06),transparent 60%);opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.speed-banner:hover .speed-shine{opacity:1;}
+.speed-banner-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.speed-icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.speed-title{font-size:14px;font-weight:800;color:var(--text);transition:color 0.7s;flex:1;line-height:1.2;}
+body.connected .speed-title{color:#fff;}
+.speed-pro-badge{font-size:10px;font-weight:800;background:linear-gradient(90deg,#c8a800,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;}
+.speed-subtitle{font-size:11px;color:var(--text2);transition:color 0.7s;margin-top:1px;}
+body.connected .speed-subtitle{color:rgba(255,255,255,0.5);}
+.speed-locked-msg{padding:10px 0 4px;font-size:13px;font-weight:600;color:var(--text2);line-height:1.6;transition:color 0.7s;}
+body.connected .speed-locked-msg{color:rgba(255,255,255,0.5);}
+.speed-locked-link{color:var(--accent);font-weight:800;text-decoration:underline;cursor:pointer;}
+.speed-meter-wrap{display:flex;align-items:flex-end;gap:18px;}
+.speedometer{position:relative;width:130px;height:78px;flex-shrink:0;}
+.speedometer svg{width:130px;height:78px;}
+.speed-readings{flex:1;display:flex;flex-direction:column;gap:6px;}
+.srd-row{display:flex;align-items:center;gap:6px;}
+.srd-ico{font-size:12px;opacity:0.7;}
+.srd-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;width:50px;transition:color 0.7s;}
+body.connected .srd-lbl{color:rgba(255,255,255,0.45);}
+.srd-val{font-size:15px;font-weight:900;color:var(--text);letter-spacing:-0.3px;transition:color 0.7s;}
+body.connected .srd-val{color:#fff;}
+.srd-unit{font-size:10px;font-weight:600;color:var(--text2);transition:color 0.7s;}
+body.connected .srd-unit{color:rgba(255,255,255,0.4);}
+.srd-ping{display:flex;align-items:center;gap:5px;margin-top:2px;}
+.srd-plbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;transition:color 0.7s;}
+body.connected .srd-plbl{color:rgba(255,255,255,0.4);}
+.srd-pval{font-size:11px;font-weight:800;color:var(--accent);transition:color 0.7s;}
+body.connected .srd-pval{color:rgba(155,130,255,0.9);}
+.srd-pms{font-size:10px;color:var(--text2);transition:color 0.7s;}
+body.connected .srd-pms{color:rgba(255,255,255,0.3);}
+body.connected #speedTrackBg{stroke:rgba(255,255,255,0.1);}
+body.connected #speedDialTxt{fill:#fff!important;}
+body.connected #speedNeedle line{stroke:rgba(155,130,255,0.9);}
+body.connected #speedNeedle circle:first-child{fill:rgba(155,130,255,0.9);}
+body.connected .speedometer text{fill:rgba(255,255,255,0.3)!important;}
+/* OVERLAYS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.48);z-index:200;justify-content:flex-end;flex-direction:column;}
+.overlay.open{display:flex;}
+.bottom-sheet{background:var(--sheet-bg);border-radius:24px 24px 0 0;padding:20px 0 32px;max-height:75vh;overflow-y:auto;animation:slideup 0.32s cubic-bezier(.4,0,.2,1);transition:background 0.4s;}
+@keyframes slideup{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.sheet-title{font-size:16px;font-weight:800;color:var(--sheet-title);padding:0 20px 14px;border-bottom:1px solid var(--border);margin-bottom:6px;transition:color 0.4s,border-color 0.4s;}
+.sheet-item{display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;transition:background 0.15s;}
+.sheet-item:hover{background:var(--item-hover);}
+.sheet-item.selected{background:var(--proto-bg);}
+.si-flag{font-size:22px;}
+.si-name{font-size:15px;font-weight:700;color:var(--sheet-title);flex:1;transition:color 0.4s;}
+.si-right{font-size:14px;font-weight:600;color:var(--accent);}
+.si-check{font-size:18px;color:var(--accent);}
+.si-gold{color:var(--gold2)!important;}
+/* PAYMENT */
+.pay-sheet{background:var(--sheet-bg);border-radius:24px 24px 0 0;padding:24px 20px 36px;animation:slideup 0.32s cubic-bezier(.4,0,.2,1);transition:background 0.4s;}
+.pay-title{font-size:18px;font-weight:900;color:var(--sheet-title);margin-bottom:5px;transition:color 0.4s;}
+.pay-sub{font-size:13px;color:var(--menu-sub);margin-bottom:20px;}
+.pay-method{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;border:2px solid var(--border);background:var(--card);cursor:pointer;margin-bottom:10px;transition:border-color 0.2s,background 0.2s,transform 0.15s;}
+.pay-method:hover{border-color:var(--accent);transform:translateY(-1px);}
+.pay-method.selected{border-color:var(--accent);background:rgba(91,63,248,0.07);}
+.pay-icon{font-size:26px;}
+.pay-name{font-size:15px;font-weight:700;color:var(--sheet-title);flex:1;transition:color 0.4s;}
+.pay-check{font-size:18px;color:var(--accent);display:none;}
+.pay-method.selected .pay-check{display:block;}
+.pay-btn{width:100%;padding:15px;background:var(--accent);border:none;border-radius:14px;font-size:16px;font-weight:800;color:#fff;cursor:pointer;transition:background 0.2s,transform 0.15s;}
+.pay-btn:hover{background:var(--accent2);transform:translateY(-1px);}
+/* SIMPLE SHEET */
+.simple-sheet{background:var(--sheet-bg);border-radius:24px 24px 0 0;padding:24px 20px 36px;animation:slideup 0.32s cubic-bezier(.4,0,.2,1);transition:background 0.4s;}
+.simple-title{font-size:18px;font-weight:900;color:var(--sheet-title);margin-bottom:12px;transition:color 0.4s;}
+.simple-body{font-size:14px;color:var(--menu-sub);line-height:1.7;white-space:pre-line;}
+/* PRO PROMO MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;align-items:center;justify-content:center;padding:18px;}
+.modal-overlay.open{display:flex;}
+.modal-card{background:var(--sheet-bg);border-radius:26px;padding:28px 22px 22px;max-width:380px;width:100%;animation:popIn 0.3s cubic-bezier(.34,1.56,.64,1);transition:background 0.4s;max-height:92vh;overflow-y:auto;}
+@keyframes popIn{from{transform:scale(0.86);opacity:0;}to{transform:scale(1);opacity:1;}}
+.promo-logo-row{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:20px;}
+.promo-logo-ico{width:46px;height:46px;border-radius:13px;background:var(--accent);display:flex;align-items:center;justify-content:center;}
+.promo-logo-m{font-size:24px;font-weight:900;color:#fff;font-style:italic;}
+.promo-heading{font-size:22px;font-weight:900;color:var(--sheet-title);transition:color 0.4s;}
+.promo-heading-gold{background:linear-gradient(90deg,#c8a800,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.promo-list{list-style:none;margin-bottom:22px;}
+.promo-list li{display:flex;align-items:flex-start;gap:9px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--sheet-title);line-height:1.4;transition:color 0.4s,border-color 0.4s;}
+.promo-list li:last-child{border-bottom:none;padding-bottom:0;}
+.promo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px;}
+.promo-detail-btn{display:inline-block;font-size:10px;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:5px;vertical-align:middle;white-space:nowrap;}
+.promo-detail-btn:hover{opacity:0.82;}
+.promo-btn-row{display:flex;gap:12px;}
+.promo-pay-btn{flex:1;padding:14px;background:var(--accent);border:none;border-radius:14px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;transition:background 0.2s;}
+.promo-pay-btn:hover{background:var(--accent2);}
+.promo-close-btn{padding:14px 18px;border:2px solid var(--border);border-radius:14px;font-size:15px;font-weight:700;color:var(--sheet-title);background:transparent;cursor:pointer;transition:color 0.4s,border-color 0.2s;}
+.promo-close-btn:hover{border-color:var(--accent);}
+/* EXTENSION CARD */
+.ext-card{background:var(--sheet-bg);border-radius:26px;padding:30px 24px 24px;max-width:360px;width:100%;animation:popIn 0.3s cubic-bezier(.34,1.56,.64,1);transition:background 0.4s;text-align:center;}
+.ext-icon-big{font-size:50px;margin-bottom:14px;}
+.ext-card-title{font-size:17px;font-weight:900;color:var(--sheet-title);margin-bottom:16px;transition:color 0.4s;}
+.ext-code-box{font-size:24px;font-weight:900;letter-spacing:3px;color:var(--accent);background:var(--proto-bg);border-radius:14px;padding:14px 22px;margin-bottom:14px;transition:background 0.4s;}
+.ext-card-sub{font-size:13px;color:var(--menu-sub);line-height:1.65;margin-bottom:20px;}
+.ext-site-link{color:var(--accent);font-weight:700;}
+.ext-close-btn{width:100%;padding:14px;background:var(--accent);border:none;border-radius:14px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;}
+/* INFO CARDS (countries / protocols) */
+.info-card{background:var(--sheet-bg);border-radius:26px;padding:24px 20px 20px;max-width:370px;width:100%;animation:popIn 0.3s cubic-bezier(.34,1.56,.64,1);transition:background 0.4s;max-height:88vh;overflow-y:auto;}
+.info-card-title{font-size:17px;font-weight:900;color:var(--sheet-title);margin-bottom:14px;transition:color 0.4s;}
+.info-items{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.info-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--proto-bg);border-radius:12px;transition:background 0.4s;}
+.info-flag{font-size:20px;}
+.info-name{font-size:14px;font-weight:700;color:var(--sheet-title);flex:1;transition:color 0.4s;}
+.info-badge{font-size:10px;font-weight:800;background:linear-gradient(90deg,#c8a800,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.info-proto-name{font-size:14px;font-weight:700;color:var(--sheet-title);transition:color 0.4s;}
+.info-proto-desc{font-size:11px;color:var(--menu-sub);margin-top:1px;}
+.info-close-btn{width:100%;padding:13px;background:var(--accent);border:none;border-radius:12px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;}
+</style>
+</head>
+<body>
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-m">M</div>
+  <div class="splash-name">MaketVPN</div>
+</div>
+<div class="phone">
+  <div class="version-badge">V 1.3</div>
+
+  <div class="header">
+    <div class="logo-box">
+      <span class="logo-m">M</span>
+      <span class="logo-text">MaketVPN</span>
+    </div>
+    <div class="header-right">
+      <div class="ext-btn" title="Расширение Chrome" onclick="openExtModal()">🧩</div>
+      <div class="header-menu" onclick="openMenu()">
+        <div class="hline"></div><div class="hline"></div><div class="hline"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="banner" id="banner">
+    <div class="banner-off" id="bannerOff">
+      <div>
+        <div class="loc-label" id="locLabelEl">Локация:</div>
+        <div class="loc-country" id="locCountry" onclick="openCountrySheet()">
+          <img class="flag-img" id="selectedFlagMain" src="https://flagcdn.com/w40/nl.png" alt="">
+          <span id="selectedNameMain">Нидерланды</span>
+        </div>
+      </div>
+      <div class="ping-list" id="pingList"></div>
+    </div>
+    <div class="banner-on" id="bannerOn">
+      <div>
+        <div class="loc-label" id="connLocLabel">Локация:</div>
+        <div class="loc-country-connected" id="connectedCountry"></div>
+      </div>
+      <div class="ping-box" id="connectedPing">23 мс</div>
+    </div>
+  </div>
+
+  <div class="power-area">
+    <div class="rings-container">
+      <div class="ring ring-1" id="ring1"></div>
+      <div class="ring ring-2" id="ring2"></div>
+      <div class="ring ring-3" id="ring3"></div>
+      <button class="power-btn" id="powerBtn" onclick="handlePower()">
+        <svg class="power-svg" viewBox="0 0 58 58">
+          <path class="arc" d="M19 14 A16 16 0 1 0 39 14"/>
+          <rect class="stem" x="26.5" y="7" width="5" height="20" rx="2.5"/>
+        </svg>
+      </button>
+    </div>
+    <div class="status-line">
+      <span class="status-text" id="statusText">ОТКЛЮЧЕНО</span>
+      <svg class="spinner" id="spinner" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke-width="2.5"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- FREE PROTOCOLS -->
+  <div class="protocol-wrap" id="protoWrap">
+    <div class="proto-slider" id="protoSlider"></div>
+    <button class="proto-btn active" data-idx="0" onclick="selectProto(this)">Auto</button>
+    <button class="proto-btn" data-idx="1" onclick="selectProto(this)">IKEv2</button>
+    <button class="proto-btn" data-idx="2" onclick="selectProto(this)">OpenVPN</button>
+  </div>
+
+  <!-- PRO PROTOCOLS -->
+  <div class="pro-proto-header">
+    <span class="pro-proto-label" id="proProtoLabel">PRO протоколы</span>
+    <span class="pro-proto-status" id="protoProStatus">🔒 только PRO</span>
+  </div>
+  <div class="protocol-wrap-pro" id="protoWrapPro">
+    <div class="pro-slider" id="protoSliderPro"></div>
+    <button class="pro-proto-btn active locked" data-idx="0" onclick="selectProtoPro(this)">Private</button>
+    <button class="pro-proto-btn locked" data-idx="1" onclick="selectProtoPro(this)">WireGuard</button>
+    <button class="pro-proto-btn locked" data-idx="2" onclick="selectProtoPro(this)">L2TP/IPSec</button>
+  </div>
+
+  <div class="brand-row">
+    <span class="brand-m">M</span>
+    <span class="brand-name">MaketVPN</span>
+  </div>
+
+  <!-- PRO ACTIVE BADGE (visible after payment) -->
+  <div class="pro-active-badge" id="proActiveBadge">
+    <span style="font-size:22px;">👑</span>
+    <div class="pro-active-text" id="proActiveTxt">MaketVPN PRO активен</div>
+    <div class="pro-active-sub" id="proActiveSub">✓ Все функции</div>
+  </div>
+
+  <!-- PRO SUBSCRIPTION BANNER -->
+  <div class="pro-banner" id="proBannerEl" onclick="openPromo()">
+    <span class="pro-icon">M</span>
+    <div class="pro-info">
+      <div class="pro-title">MaketVPN PRO</div>
+      <div class="pro-price" id="proPriceEl">за <span>2.99$</span> в месяц</div>
+    </div>
+    <span class="pro-arrow">&#x203A;</span>
+  </div>
+
+  <!-- SPEED TEST BANNER -->
+  <div class="speed-banner" id="speedBanner" onclick="handleSpeedBannerClick()">
+    <div class="speed-shine"></div>
+    <div class="speed-banner-hdr">
+      <div class="speed-icon">⚡</div>
+      <div>
+        <div class="speed-title" id="speedTitleEl">Измерить скорость подключения <span class="pro-shimmer">PRO</span></div>
+        <div class="speed-subtitle" id="speedSubTitle">Нажмите для запуска теста</div>
+      </div>
+    </div>
+    <!-- LOCKED -->
+    <div id="speedLocked" class="speed-locked-msg">
+      <span id="speedLockedLine">Для использования этой функции оформите подписку</span>
+      <span class="speed-locked-link" id="speedLockedLink" onclick="event.stopPropagation();openPromo()">MaketVPN PRO</span>
+    </div>
+    <!-- METER (hidden until PRO active) -->
+    <div class="speed-meter-wrap" id="speedMeter" style="display:none;">
+      <div class="speedometer">
+        <svg viewBox="0 0 130 78" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10,70 A55,55 0 0,1 120,70" fill="none" stroke="#e0dcff" stroke-width="8" stroke-linecap="round" id="speedTrackBg"/>
+          <path d="M10,70 A55,55 0 0,1 120,70" fill="none" stroke="url(#spGrad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="173" stroke-dashoffset="173" id="speedArc" style="transition:stroke-dashoffset 0.4s ease;"/>
+          <g stroke="#bbb" stroke-width="1" opacity="0.45">
+            <line x1="65" y1="15" x2="65" y2="20"/>
+            <line x1="30" y1="26" x2="33.5" y2="30.5"/>
+            <line x1="100" y1="26" x2="96.5" y2="30.5"/>
+            <line x1="14" y1="55" x2="19" y2="55"/>
+            <line x1="116" y1="55" x2="111" y2="55"/>
+          </g>
+          <g id="speedNeedle" style="transform-origin:65px 70px;transform:rotate(-90deg);transition:transform 0.5s cubic-bezier(.4,0,.2,1);">
+            <line x1="65" y1="70" x2="65" y2="22" stroke="#5b3ff8" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="65" cy="70" r="5" fill="#5b3ff8"/>
+            <circle cx="65" cy="70" r="2.5" fill="#fff"/>
+          </g>
+          <text id="speedDialTxt" x="65" y="62" text-anchor="middle" font-size="13" font-weight="900" fill="#1a1a2e" font-family="system-ui,sans-serif">—</text>
+          <text x="65" y="74" text-anchor="middle" font-size="7.5" font-weight="600" fill="#888" font-family="system-ui,sans-serif">Mbps</text>
+          <text x="10" y="78" text-anchor="middle" font-size="7" fill="#aaa" font-family="system-ui,sans-serif">0</text>
+          <text x="65" y="14" text-anchor="middle" font-size="7" fill="#aaa" font-family="system-ui,sans-serif">50</text>
+          <text x="120" y="78" text-anchor="middle" font-size="7" fill="#aaa" font-family="system-ui,sans-serif">100</text>
+          <defs>
+            <linearGradient id="spGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#00d4ff"/>
+              <stop offset="60%" stop-color="#5b3ff8"/>
+              <stop offset="100%" stop-color="#ff6b35"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="speed-readings">
+        <div id="speedIdle" style="display:flex;flex-direction:column;gap:5px;">
+          <div id="speedIdleTitleEl" style="font-size:13px;font-weight:700;color:var(--text);transition:color 0.7s;">Проверьте скорость VPN</div>
+          <div id="speedIdleSubEl" style="font-size:11px;color:var(--text2);transition:color 0.7s;">Загрузка · Выгрузка · Пинг</div>
+        </div>
+        <div id="speedDyn" style="display:none;flex-direction:column;gap:7px;">
+          <div class="srd-row"><span class="srd-ico">⬇️</span><span class="srd-lbl" id="dlLblEl">Загрузка</span><span class="srd-val" id="dlVal">—</span><span class="srd-unit"> Mbps</span></div>
+          <div class="srd-row"><span class="srd-ico">⬆️</span><span class="srd-lbl" id="ulLblEl">Выгрузка</span><span class="srd-val" id="ulVal">—</span><span class="srd-unit"> Mbps</span></div>
+          <div class="srd-ping"><span class="srd-plbl" id="pingLblEl">Пинг</span><span class="srd-pval" id="pingVal">—</span><span class="srd-pms"> мс</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIDE MENU -->
+<div class="menu-overlay" id="menuOverlay">
+  <div class="menu-scrim" onclick="closeMenu()"></div>
+  <div class="menu-panel">
+    <div class="menu-header"><span class="menu-logo-m">M</span><span class="menu-logo-text">MaketVPN</span></div>
+    <div class="menu-item" onclick="closeMenu();openLang();">
+      <div class="menu-item-icon">&#x1F310;</div>
+      <div class="menu-item-text">
+        <div class="menu-item-label" id="menuLangLabel">Смена языка</div>
+        <div class="menu-item-sub" id="currentLangSub">Русский</div>
+      </div>
+      <span class="menu-item-arrow">&#x203A;</span>
+    </div>
+    <div class="theme-row">
+      <div class="theme-logo-wrap"><span class="theme-logo-m">M</span></div>
+      <span class="theme-label" id="menuThemeLabel">Тема</span>
+      <div class="pill-toggle" id="themeToggle" onclick="toggleTheme()">
+        <div class="pill-knob"></div>
+        <div class="pill-icons"><span class="pill-sun">☀️</span><span class="pill-moon">🌙</span></div>
+      </div>
+    </div>
+    <div class="menu-ip-row">
+      <div class="menu-ip-label" id="menuIpLabel">ВАШ IP</div>
+      <div class="menu-ip-val" id="menuIpVal">—</div>
+    </div>
+    <div class="menu-item" onclick="closeMenu();openSimple('settings');"><div class="menu-item-icon">⚙️</div><div class="menu-item-text"><div class="menu-item-label" id="menuSettingsLabel">Настройки</div></div><span class="menu-item-arrow">›</span></div>
+    <div class="menu-item" onclick="closeMenu();openSimple('support');"><div class="menu-item-icon">💬</div><div class="menu-item-text"><div class="menu-item-label" id="menuSupportLabel">Поддержка</div></div><span class="menu-item-arrow">›</span></div>
+    <div class="menu-item" onclick="closeMenu();openSimple('about');" style="border-bottom:none;"><div class="menu-item-icon">ℹ️</div><div class="menu-item-text"><div class="menu-item-label" id="menuAboutLabel">О нас</div></div><span class="menu-item-arrow">›</span></div>
+  </div>
+</div>
+
+<!-- COUNTRY OVERLAY -->
+<div class="overlay" id="countryOverlay" onclick="overlayClose('countryOverlay',event)">
+  <div class="bottom-sheet">
+    <div class="sheet-title" id="countrySheetTitle">Выберите страну</div>
+    <div id="countryList"></div>
+  </div>
+</div>
+
+<!-- LANGUAGE OVERLAY -->
+<div class="overlay" id="langOverlay" onclick="overlayClose('langOverlay',event)">
+  <div class="bottom-sheet">
+    <div class="sheet-title" id="langSheetTitle">Выберите язык</div>
+    <div id="langList"></div>
+  </div>
+</div>
+
+<!-- PAYMENT OVERLAY -->
+<div class="overlay" id="payOverlay" onclick="overlayClose('payOverlay',event)">
+  <div class="pay-sheet">
+    <div class="pay-title" id="payTitleEl">Выберите способ оплаты</div>
+    <div class="pay-sub" id="paySubEl">MaketVPN PRO — 2.99$ в месяц</div>
+    <div id="payMethods"></div>
+    <button class="pay-btn" id="payBtnEl" onclick="handlePayBtn()">Оплатить</button>
+  </div>
+</div>
+
+<!-- SIMPLE OVERLAY -->
+<div class="overlay" id="simpleOverlay" onclick="overlayClose('simpleOverlay',event)">
+  <div class="simple-sheet">
+    <div class="simple-title" id="simpleTitle"></div>
+    <div class="simple-body" id="simpleBody"></div>
+  </div>
+</div>
+
+<!-- PRO PROMO MODAL -->
+<div class="modal-overlay" id="promoModal" onclick="promoModalClose(event)">
+  <div class="modal-card">
+    <div class="promo-logo-row">
+      <div class="promo-logo-ico"><span class="promo-logo-m">M</span></div>
+      <div class="promo-heading" id="promoHeading">MaketVPN <span class="pro-shimmer">PRO</span></div>
+    </div>
+    <ul class="promo-list">
+      <li><div class="promo-dot"></div><span id="promoFeat1">Полное отсутствие рекламы</span></li>
+      <li><div class="promo-dot"></div><span id="promoFeat2">Проверка скорости подключения</span></li>
+      <li><div class="promo-dot"></div><span id="promoFeat3">Больше регионов для подключения <span class="promo-detail-btn" onclick="openInfoCountries(event)">Смотреть →</span></span></li>
+      <li><div class="promo-dot"></div><span id="promoFeat4">Дополнительные современные протоколы подключения <span class="promo-detail-btn" onclick="openInfoProtos(event)">Смотреть →</span></span></li>
+      <li><div class="promo-dot"></div><span id="promoFeat5">Браузерное расширение для Google Chrome. VPN прямо в вашем браузере</span></li>
+    </ul>
+    <div class="promo-btn-row">
+      <button class="promo-pay-btn" id="promoPayBtn" onclick="goToPayment()">Перейти к оплате</button>
+      <button class="promo-close-btn" id="promoCloseBtn" onclick="closePromo()">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXTENSION MODAL -->
+<div class="modal-overlay" id="extModal" onclick="extModalClose(event)">
+  <div class="ext-card">
+    <div class="ext-icon-big">🧩</div>
+    <div class="ext-card-title" id="extCardTitle">Расширение MaketVPN для Chrome</div>
+    <!-- LOCKED (no PRO) -->
+    <div id="extLockedDiv" style="text-align:center;padding:10px 0 16px;">
+      <div style="font-size:36px;margin-bottom:10px;">🔒</div>
+      <div style="font-size:15px;font-weight:800;color:var(--sheet-title);margin-bottom:6px;transition:color 0.4s;" id="extLockedMsg">Доступно только для PRO подписчиков</div>
+      <div style="font-size:13px;color:var(--menu-sub);margin-bottom:16px;" id="extLockedSub">Оформите PRO для получения кода</div>
+      <button class="ext-close-btn" style="background:var(--accent);" onclick="closeExtModal();openPromo()">MaketVPN PRO →</button>
+    </div>
+    <!-- UNLOCKED (after PRO) -->
+    <div id="extUnlockedDiv" style="display:none;">
+      <div class="ext-code-box">170ABK</div>
+      <div class="ext-card-sub"><span id="extCodeLabel">Ваш код активации расширения:</span> <strong>170ABK</strong><br><br><span id="extSiteText">Расширение можно скачать на официальном сайте</span><br><span class="ext-site-link">maketvpn.com/extension</span></div>
+    </div>
+    <button class="ext-close-btn" id="extCloseBtn" onclick="closeExtModal()" style="margin-top:10px;">Закрыть</button>
+  </div>
+</div>
+
+<!-- INFO: PRO COUNTRIES MODAL -->
+<div class="modal-overlay" id="infoCountriesModal" onclick="infoModalClose('infoCountriesModal',event)">
+  <div class="info-card">
+    <div class="info-card-title" id="infoCountriesTitle">✦ Новые регионы в PRO</div>
+    <div class="info-items">
+      <div class="info-row"><span class="info-flag">🇱🇹</span><span class="info-name">Литва</span><span class="info-badge">PRO</span></div>
+      <div class="info-row"><span class="info-flag">🇱🇻</span><span class="info-name">Латвия</span><span class="info-badge">PRO</span></div>
+      <div class="info-row"><span class="info-flag">🇪🇪</span><span class="info-name">Эстония</span><span class="info-badge">PRO</span></div>
+      <div class="info-row"><span class="info-flag">🇵🇱</span><span class="info-name">Польша</span><span class="info-badge">PRO</span></div>
+      <div class="info-row"><span class="info-flag">🇹🇷</span><span class="info-name">Турция</span><span class="info-badge">PRO</span></div>
+      <div class="info-row"><span class="info-flag">🇦🇺</span><span class="info-name">Австралия</span><span class="info-badge">PRO</span></div>
+      <div class="info-row"><span class="info-flag">🇧🇾</span><span class="info-name">Беларусь</span><span class="info-badge">PRO</span></div>
+      <div class="info-row"><span class="info-flag">🇦🇷</span><span class="info-name">Аргентина</span><span class="info-badge">PRO</span></div>
+      <div class="info-row"><span class="info-flag">🇨🇦</span><span class="info-name">Канада</span><span class="info-badge">PRO</span></div>
+    </div>
+    <button class="info-close-btn" id="infoCountriesClose" onclick="closeInfoModal('infoCountriesModal')">Закрыть</button>
+  </div>
+</div>
+
+<!-- INFO: PRO PROTOCOLS MODAL -->
+<div class="modal-overlay" id="infoProtosModal" onclick="infoModalClose('infoProtosModal',event)">
+  <div class="info-card">
+    <div class="info-card-title" id="infoProtosTitle">✦ PRO протоколы</div>
+    <div class="info-items">
+      <div class="info-row"><span class="info-flag">🔐</span><div style="flex:1;"><div class="info-proto-name">Private</div><div class="info-proto-desc" id="protoPrivDesc">Собственный протокол MaketVPN — максимальная защита</div></div></div>
+      <div class="info-row"><span class="info-flag">⚡</span><div style="flex:1;"><div class="info-proto-name">WireGuard</div><div class="info-proto-desc" id="protoWGDesc">Современный скоростной протокол с минимальной задержкой</div></div></div>
+      <div class="info-row"><span class="info-flag">🛡️</span><div style="flex:1;"><div class="info-proto-name">L2TP/IPSec</div><div class="info-proto-desc" id="protoL2tpDesc">Надёжное двойное шифрование для максимальной безопасности</div></div></div>
+    </div>
+    <button class="info-close-btn" id="infoProtosClose" onclick="closeInfoModal('infoProtosModal')">Закрыть</button>
+  </div>
+</div>
+
+<script>
+var T={
+  ru:{
+    location:"Локация:",pro_price:"за <span>2.99$</span> в месяц",
+    menu_lang:"Смена языка",menu_theme:"Тема",menu_ip:"ВАШ IP",
+    menu_settings:"Настройки",menu_support:"Поддержка",menu_about:"О нас",
+    choose_country:"Выберите страну",choose_lang:"Выберите язык",
+    pay_title:"Выберите способ оплаты",pay_sub:"MaketVPN PRO — 2.99$ в месяц",pay_btn:"Оплатить",
+    disconnected:"ОТКЛЮЧЕНО",searching:"ПОИСК...",connected_prefix:"ВЫ ПОДКЛЮЧЕНЫ",
+    lang_name:"Русский",
+    countries:["Нидерланды","Финляндия","Германия","США","Великобритания","Франция","Япония","Сингапур"],
+    pro_countries:["Литва","Латвия","Эстония","Польша","Турция","Австралия","Беларусь","Аргентина","Канада"],
+    settings_title:"Настройки",settings_body:"Здесь появятся настройки приложения в следующих обновлениях.",
+    support_title:"Поддержка",support_body:"Напишите нам: support@maketvpn.com\n\nМы отвечаем в течение 24 часов.",
+    about_title:"О нас",about_body:"MaketVPN v1.3\n\nМы обеспечиваем безопасный и быстрый доступ к интернету для пользователей по всему миру.",
+    pay_success:"Спасибо! Оплата прошла успешно.",
+    pay_select_warn:"Пожалуйста, выберите способ оплаты",
+    proto_free_label:"Протоколы",proto_pro_label:"PRO протоколы",proto_pro_active:"✓ активно",proto_pro_locked:"🔒 только PRO",
+    speed_title:"Измерить скорость подключения",speed_hint:"Нажмите для запуска теста",
+    speed_locked:"Для использования этой функции оформите подписку",
+    speed_testing_dl:"Тестирование загрузки...",speed_testing_ul:"Тестирование выгрузки...",speed_done:"Тест завершён ✓",
+    speed_idle_title:"Проверьте скорость VPN",speed_idle_sub:"Загрузка · Выгрузка · Пинг",
+    lbl_dl:"Загрузка",lbl_ul:"Выгрузка",lbl_ping:"Пинг",
+    pro_active_text:"MaketVPN PRO активен",pro_active_sub:"✓ Все функции",
+    promo_title:"MaketVPN",promo_feat1:"Полное отсутствие рекламы",promo_feat2:"Проверка скорости подключения",
+    promo_feat3:"Больше регионов для подключения",promo_feat4:"Дополнительные современные протоколы подключения",
+    promo_feat5:"Браузерное расширение для Google Chrome. VPN прямо в вашем браузере",
+    promo_see:"Смотреть →",promo_pay_btn:"Перейти к оплате",promo_close:"Закрыть",
+    ext_title:"Расширение MaketVPN для Chrome",ext_code_label:"Ваш код активации расширения:",
+    ext_site_text:"Расширение можно скачать на официальном сайте",ext_close:"Закрыть",
+    ext_locked:"Доступно только для PRO подписчиков",ext_locked_sub:"Оформите PRO для получения кода",
+    info_countries_title:"Новые регионы в PRO",info_protos_title:"PRO протоколы",info_close:"Закрыть",
+    proto_priv_desc:"Собственный протокол MaketVPN — максимальная защита",
+    proto_wg_desc:"Современный скоростной протокол с минимальной задержкой",
+    proto_l2tp_desc:"Надёжное двойное шифрование для максимальной безопасности",
+    pro_proto_label:"PRO протоколы",brand_name:"MaketVPN",
+    pay_ru:"Российские карты (МИР)"
+  },
+  en:{
+    location:"Location:",pro_price:"for <span>2.99$</span> per month",
+    menu_lang:"Language",menu_theme:"Theme",menu_ip:"YOUR IP",
+    menu_settings:"Settings",menu_support:"Support",menu_about:"About us",
+    choose_country:"Choose country",choose_lang:"Choose language",
+    pay_title:"Choose payment method",pay_sub:"MaketVPN PRO — $2.99 per month",pay_btn:"Pay now",
+    disconnected:"DISCONNECTED",searching:"SEARCHING...",connected_prefix:"CONNECTED",
+    lang_name:"English",
+    countries:["Netherlands","Finland","Germany","USA","United Kingdom","France","Japan","Singapore"],
+    pro_countries:["Lithuania","Latvia","Estonia","Poland","Turkey","Australia","Belarus","Argentina","Canada"],
+    settings_title:"Settings",settings_body:"App settings will appear here in future updates.",
+    support_title:"Support",support_body:"Email us: support@maketvpn.com\n\nWe respond within 24 hours.",
+    about_title:"About us",about_body:"MaketVPN v1.3\n\nWe provide secure and fast internet access for users worldwide.",
+    pay_success:"Thank you! Payment successful.",
+    pay_select_warn:"Please select a payment method",
+    proto_free_label:"Protocols",proto_pro_label:"PRO Protocols",proto_pro_active:"✓ active",proto_pro_locked:"🔒 PRO only",
+    speed_title:"Measure connection speed",speed_hint:"Tap to start test",
+    speed_locked:"Subscribe to MaketVPN PRO to use this feature",
+    speed_testing_dl:"Testing download...",speed_testing_ul:"Testing upload...",speed_done:"Test complete ✓",
+    speed_idle_title:"Check VPN speed",speed_idle_sub:"Download · Upload · Ping",
+    lbl_dl:"Download",lbl_ul:"Upload",lbl_ping:"Ping",
+    pro_active_text:"MaketVPN PRO active",pro_active_sub:"✓ All features",
+    promo_title:"MaketVPN",promo_feat1:"No ads at all",promo_feat2:"Connection speed test",
+    promo_feat3:"More regions to connect",promo_feat4:"Additional modern connection protocols",
+    promo_feat5:"Chrome browser extension. VPN right in your browser",
+    promo_see:"See →",promo_pay_btn:"Proceed to payment",promo_close:"Close",
+    ext_title:"MaketVPN Chrome Extension",ext_code_label:"Your extension activation code:",
+    ext_site_text:"Download the extension from the official website",ext_close:"Close",
+    ext_locked:"Available for PRO subscribers only",ext_locked_sub:"Subscribe to PRO to get the code",
+    info_countries_title:"New regions in PRO",info_protos_title:"PRO Protocols",info_close:"Close",
+    proto_priv_desc:"MaketVPN's own protocol — maximum security",
+    proto_wg_desc:"Modern high-speed protocol with minimal latency",
+    proto_l2tp_desc:"Reliable double encryption for maximum security",
+    pro_proto_label:"PRO Protocols",brand_name:"MaketVPN",
+    pay_ru:"Russian cards (MIR)"
+  },
+  zh:{
+    location:"位置：",pro_price:"每月 <span>2.99$</span>",
+    menu_lang:"语言切换",menu_theme:"主题",menu_ip:"您的IP",
+    menu_settings:"设置",menu_support:"支持",menu_about:"关于我们",
+    choose_country:"选择国家",choose_lang:"选择语言",
+    pay_title:"选择支付方式",pay_sub:"MaketVPN PRO — 每月 2.99$",pay_btn:"立即支付",
+    disconnected:"已断开",searching:"搜索中...",connected_prefix:"已连接",
+    lang_name:"中文",
+    countries:["荷兰","芬兰","德国","美国","英国","法国","日本","新加坡"],
+    pro_countries:["立陶宛","拉脱维亚","爱沙尼亚","波兰","土耳其","澳大利亚","白俄罗斯","阿根廷","加拿大"],
+    settings_title:"设置",settings_body:"应用设置将在未来的更新中出现。",
+    support_title:"支持",support_body:"联系我们: support@maketvpn.com\n\n我们在24小时内回复。",
+    about_title:"关于我们",about_body:"MaketVPN v1.3\n\n我们为全球用户提供安全快速的网络访问。",
+    pay_success:"谢谢！支付成功。",
+    pay_select_warn:"请选择支付方式",
+    proto_free_label:"协议",proto_pro_label:"PRO协议",proto_pro_active:"✓ 已激活",proto_pro_locked:"🔒 仅PRO",
+    speed_title:"测量连接速度",speed_hint:"点击开始测试",
+    speed_locked:"订阅MaketVPN PRO以使用此功能",
+    speed_testing_dl:"测试下载...",speed_testing_ul:"测试上传...",speed_done:"测试完成 ✓",
+    speed_idle_title:"检查VPN速度",speed_idle_sub:"下载 · 上传 · 延迟",
+    lbl_dl:"下载",lbl_ul:"上传",lbl_ping:"延迟",
+    pro_active_text:"MaketVPN PRO 已激活",pro_active_sub:"✓ 所有功能",
+    promo_title:"MaketVPN",promo_feat1:"完全无广告",promo_feat2:"连接速度测试",
+    promo_feat3:"更多可连接地区",promo_feat4:"额外的现代连接协议",
+    promo_feat5:"Chrome浏览器扩展。在浏览器中直接使用VPN",
+    promo_see:"查看 →",promo_pay_btn:"前往付款",promo_close:"关闭",
+    ext_title:"MaketVPN Chrome扩展",ext_code_label:"您的扩展激活码：",
+    ext_site_text:"可从官方网站下载扩展",ext_close:"关闭",
+    ext_locked:"仅对PRO用户开放",ext_locked_sub:"订阅PRO以获取代码",
+    info_countries_title:"PRO新地区",info_protos_title:"PRO协议",info_close:"关闭",
+    proto_priv_desc:"MaketVPN自有协议 — 最高安全性",
+    proto_wg_desc:"现代高速协议，延迟最低",
+    proto_l2tp_desc:"可靠的双重加密以实现最高安全性",
+    pro_proto_label:"PRO协议",brand_name:"MaketVPN",
+    pay_ru:"俄罗斯银行卡 (МИР)"
+  },
+  be:{
+    location:"Лакацыя:",pro_price:"за <span>2.99$</span> у месяц",
+    menu_lang:"Змена мовы",menu_theme:"Тэма",menu_ip:"ВАШ IP",
+    menu_settings:"Налады",menu_support:"Падтрымка",menu_about:"Пра нас",
+    choose_country:"Выберыце краіну",choose_lang:"Выберыце мову",
+    pay_title:"Выберыце спосаб аплаты",pay_sub:"MaketVPN PRO — 2.99$ у месяц",pay_btn:"Аплаціць",
+    disconnected:"АДКЛЮЧАНА",searching:"ПОШУК...",connected_prefix:"ВЫ ПАДКЛЮЧАНЫ",
+    lang_name:"Беларуская",
+    countries:["Нідэрланды","Фінляндыя","Германія","ЗША","Вялікабрытанія","Францыя","Японія","Сінгапур"],
+    pro_countries:["Літва","Латвія","Эстонія","Польшча","Турцыя","Аўстралія","Беларусь","Аргентына","Канада"],
+    settings_title:"Налады",settings_body:"Налады праграмы зявяцца тут у наступных абнаўленнях.",
+    support_title:"Падтрымка",support_body:"Пішыце нам: support@maketvpn.com\n\nМы адказваем на працягу 24 гадзін.",
+    about_title:"Пра нас",about_body:"MaketVPN v1.3\n\nМы забяспечваем бяспечны і хуткі доступ да інтэрнэту для карыстальнікаў па ўсім свеце.",
+    pay_success:"Дзякуй! Аплата прайшла паспяхова.",
+    pay_select_warn:"Калі ласка, абярыце спосаб аплаты",
+    proto_free_label:"Пратаколы",proto_pro_label:"PRO пратаколы",proto_pro_active:"✓ актыўна",proto_pro_locked:"🔒 толькі PRO",
+    speed_title:"Вымераць хуткасць злучэння",speed_hint:"Націсніце для запуску тэсту",
+    speed_locked:"Для выкарыстання гэтай функцыі аформіце падпіску",
+    speed_testing_dl:"Тэставанне загрузкі...",speed_testing_ul:"Тэставанне выгрузкі...",speed_done:"Тэст завершан ✓",
+    speed_idle_title:"Праверце хуткасць VPN",speed_idle_sub:"Загрузка · Выгрузка · Пінг",
+    lbl_dl:"Загрузка",lbl_ul:"Выгрузка",lbl_ping:"Пінг",
+    pro_active_text:"MaketVPN PRO актыўны",pro_active_sub:"✓ Усе функцыі",
+    promo_title:"MaketVPN",promo_feat1:"Поўная адсутнасць рэкламы",promo_feat2:"Праверка хуткасці злучэння",
+    promo_feat3:"Больш рэгіёнаў для падключэння",promo_feat4:"Дадатковыя сучасныя пратаколы падключэння",
+    promo_feat5:"Браўзерны дадатак для Google Chrome. VPN прама ў вашым браўзеры",
+    promo_see:"Глядзець →",promo_pay_btn:"Перайсці да аплаты",promo_close:"Закрыць",
+    ext_title:"Дадатак MaketVPN для Chrome",ext_code_label:"Ваш код актывацыі дадатку:",
+    ext_site_text:"Дадатак можна спампаваць на афіцыйным сайце",ext_close:"Закрыць",
+    ext_locked:"Даступна толькі для PRO падпісчыкаў",ext_locked_sub:"Аформіце PRO для атрымання кода",
+    info_countries_title:"Новыя рэгіёны ў PRO",info_protos_title:"PRO пратаколы",info_close:"Закрыць",
+    proto_priv_desc:"Уласны пратакол MaketVPN — максімальная абарона",
+    proto_wg_desc:"Сучасны хуткасны пратакол з мінімальнай затрымкай",
+    proto_l2tp_desc:"Надзейнае двайное шыфраванне для максімальнай бяспекі",
+    pro_proto_label:"PRO пратаколы",brand_name:"MaketVPN",
+    pay_ru:"Расійскія карты (МІР)"
+  }
+};
+var LANGS=[{code:"ru",flag:"🇷🇺"},{code:"en",flag:"🇬🇧"},{code:"zh",flag:"🇨🇳"},{code:"be",flag:"🇧🇾"}];
+var IPS=["53°53'58.40\"N 27°32'05.17\"E","44°49'00.90\"N 20°27'17.18\"E","55°45'32.47\"N 37°36'41.66\"E","46°49'21.72\"N 6°56'23.02\"E"];
+var COUNTRIES=[
+  {code:"nl",flag:"https://flagcdn.com/w40/nl.png",minMs:20,maxMs:30,pro:false},
+  {code:"fi",flag:"https://flagcdn.com/w40/fi.png",minMs:25,maxMs:38,pro:false},
+  {code:"de",flag:"https://flagcdn.com/w40/de.png",minMs:25,maxMs:38,pro:false},
+  {code:"us",flag:"https://flagcdn.com/w40/us.png",minMs:35,maxMs:60,pro:false},
+  {code:"gb",flag:"https://flagcdn.com/w40/gb.png",minMs:35,maxMs:60,pro:false},
+  {code:"fr",flag:"https://flagcdn.com/w40/fr.png",minMs:35,maxMs:60,pro:false},
+  {code:"jp",flag:"https://flagcdn.com/w40/jp.png",minMs:35,maxMs:60,pro:false},
+  {code:"sg",flag:"https://flagcdn.com/w40/sg.png",minMs:35,maxMs:60,pro:false},
+  {code:"lt",flag:"https://flagcdn.com/w40/lt.png",minMs:22,maxMs:34,pro:true},
+  {code:"lv",flag:"https://flagcdn.com/w40/lv.png",minMs:23,maxMs:36,pro:true},
+  {code:"ee",flag:"https://flagcdn.com/w40/ee.png",minMs:24,maxMs:37,pro:true},
+  {code:"pl",flag:"https://flagcdn.com/w40/pl.png",minMs:27,maxMs:42,pro:true},
+  {code:"tr",flag:"https://flagcdn.com/w40/tr.png",minMs:42,maxMs:68,pro:true},
+  {code:"au",flag:"https://flagcdn.com/w40/au.png",minMs:95,maxMs:145,pro:true},
+  {code:"by",flag:"https://flagcdn.com/w40/by.png",minMs:28,maxMs:44,pro:true},
+  {code:"ar",flag:"https://flagcdn.com/w40/ar.png",minMs:72,maxMs:115,pro:true},
+  {code:"ca",flag:"https://flagcdn.com/w40/ca.png",minMs:42,maxMs:78,pro:true}
+];
+var PAY_METHODS=[{icon:"💳",key:"visa",label:"Visa / Mastercard"},{icon:"🅿️",key:"paypal",label:"PayPal"},{icon:"🍎",key:"apple",label:"Apple Pay"},{icon:"🔴",key:"google",label:"Google Pay"},{icon:"₿",key:"crypto",label:"Crypto"}];
+
+var lang="ru",nightMode=false,selectedIdx=0,pings={};
+var isConnected=false,isConnecting=false;
+var timerInterval=null,timerSecs=0,activeProtoIdx=0,activeProtoProIdx=0,selectedPayMethod=null;
+var isPro=false,speedRunning=false,speedTimer=null;
+
+function tr(k){return(T[lang]&&T[lang][k]!==undefined?T[lang][k]:T.ru[k])||k;}
+function cname(i){
+  var c=COUNTRIES[i];
+  if(c.pro){
+    var pc=(T[lang].pro_countries||T.ru.pro_countries);
+    return pc[i-8]||c.code.toUpperCase();
+  }
+  return(T[lang].countries&&T[lang].countries[i])||T.ru.countries[i];
+}
+
+function refreshPings(){
+  var used=[];
+  COUNTRIES.forEach(function(c){
+    var v,t=0;
+    do{v=Math.floor(Math.random()*(c.maxMs-c.minMs+1))+c.minMs;t++;}
+    while(used.indexOf(v)>=0&&t<80);
+    used.push(v);pings[c.code]=v;
+  });
+  renderPingList();
+}
+function renderPingList(){
+  var list=document.getElementById("pingList");
+  list.innerHTML="";
+  COUNTRIES.forEach(function(c,i){
+    if(c.pro&&!isPro)return;
+    var d=document.createElement("div");
+    d.className="ping-item"+(c.pro?" pro-country":"");
+    d.innerHTML='<img class="flag-img" src="'+c.flag+'" alt=""><span>'+pings[c.code]+'мс'+(c.pro?' ✦':'')+'</span>';
+    d.style.fontWeight=i===selectedIdx?"800":"600";
+    (function(idx){d.onclick=function(){setSelectedCountry(idx);};})(i);
+    list.appendChild(d);
+  });
+}
+
+function setSelectedCountry(i){
+  if(isConnected||isConnecting)return;
+  var c=COUNTRIES[i];
+  if(c.pro&&!isPro){openPromo();return;}
+  selectedIdx=i;
+  document.getElementById("selectedFlagMain").src=c.flag;
+  document.getElementById("selectedNameMain").textContent=cname(i);
+  renderPingList();
+  document.getElementById("countryOverlay").classList.remove("open");
+}
+function openCountrySheet(){
+  if(isConnected||isConnecting)return;
+  var list=document.getElementById("countryList");list.innerHTML="";
+  COUNTRIES.forEach(function(c,i){
+    var locked=c.pro&&!isPro;
+    var d=document.createElement("div");
+    d.className="sheet-item"+(i===selectedIdx?" selected":"");
+    d.innerHTML='<img class="flag-img" src="'+c.flag+'" alt="" style="width:28px;height:20px;"><span class="si-name'+(c.pro?" si-gold":"")+'">'+cname(i)+(c.pro?' ✦':'')+'</span>'+(locked?'<span class="si-right si-gold">🔒 PRO</span>':'<span class="si-right">'+pings[c.code]+' мс</span>');
+    (function(idx){d.onclick=function(){setSelectedCountry(idx);};})(i);
+    list.appendChild(d);
+  });
+  document.getElementById("countryOverlay").classList.add("open");
+}
+
+function overlayClose(id,e){if(e.target===document.getElementById(id))document.getElementById(id).classList.remove("open");}
+function openMenu(){document.getElementById("menuIpVal").textContent=IPS[Math.floor(Math.random()*IPS.length)];document.getElementById("menuOverlay").classList.add("open");}
+function closeMenu(){document.getElementById("menuOverlay").classList.remove("open");}
+function openLang(){
+  var list=document.getElementById("langList");list.innerHTML="";
+  LANGS.forEach(function(l){
+    var d=document.createElement("div");d.className="sheet-item";
+    d.innerHTML='<span class="si-flag">'+l.flag+'</span><span class="si-name">'+T[l.code].lang_name+'</span>'+(l.code===lang?'<span class="si-check">✓</span>':'');
+    (function(code){d.onclick=function(){setLang(code);document.getElementById("langOverlay").classList.remove("open");};})(l.code);
+    list.appendChild(d);
+  });
+  document.getElementById("langOverlay").classList.add("open");
+}
+function setLang(code){lang=code;applyTranslations();}
+function applyTranslations(){
+  // header / location
+  document.getElementById("locLabelEl").textContent=tr("location");
+  document.getElementById("connLocLabel").textContent=tr("location");
+  document.getElementById("proPriceEl").innerHTML=tr("pro_price");
+  // menu
+  document.getElementById("menuLangLabel").textContent=tr("menu_lang");
+  document.getElementById("menuThemeLabel").textContent=tr("menu_theme");
+  document.getElementById("menuIpLabel").textContent=tr("menu_ip");
+  document.getElementById("menuSettingsLabel").textContent=tr("menu_settings");
+  document.getElementById("menuSupportLabel").textContent=tr("menu_support");
+  document.getElementById("menuAboutLabel").textContent=tr("menu_about");
+  document.getElementById("currentLangSub").textContent=T[lang].lang_name;
+  // overlays
+  document.getElementById("countrySheetTitle").textContent=tr("choose_country");
+  document.getElementById("langSheetTitle").textContent=tr("choose_lang");
+  document.getElementById("payTitleEl").textContent=tr("pay_title");
+  document.getElementById("paySubEl").textContent=tr("pay_sub");
+  document.getElementById("payBtnEl").textContent=tr("pay_btn");
+  // status
+  document.getElementById("selectedNameMain").textContent=cname(selectedIdx);
+  if(!isConnected&&!isConnecting)document.getElementById("statusText").textContent=tr("disconnected");
+  // proto labels
+  document.getElementById("protoProStatus").textContent=isPro?tr("proto_pro_active"):tr("proto_pro_locked");
+  // PRO active badge
+  document.getElementById("proActiveTxt").textContent=tr("pro_active_text");
+  document.getElementById("proActiveSub").textContent=tr("pro_active_sub");
+  // speed banner
+  document.getElementById("speedTitleEl").innerHTML=tr("speed_title")+' <span class="pro-shimmer">PRO</span>';
+  if(!isPro){
+    document.getElementById("speedSubTitle").textContent="";
+    document.getElementById("speedLockedLine").textContent=tr("speed_locked");
+    document.getElementById("speedLockedLink").textContent="MaketVPN PRO";
+  } else {
+    if(!speedRunning)document.getElementById("speedSubTitle").textContent=tr("speed_hint");
+  }
+  document.getElementById("speedIdleTitleEl").textContent=tr("speed_idle_title");
+  document.getElementById("speedIdleSubEl").textContent=tr("speed_idle_sub");
+  document.getElementById("dlLblEl").textContent=tr("lbl_dl");
+  document.getElementById("ulLblEl").textContent=tr("lbl_ul");
+  document.getElementById("pingLblEl").textContent=tr("lbl_ping");
+  // promo modal
+  document.getElementById("promoHeading").innerHTML='MaketVPN <span class="pro-shimmer">PRO</span>';
+  document.getElementById("promoFeat1").textContent=tr("promo_feat1");
+  document.getElementById("promoFeat2").textContent=tr("promo_feat2");
+  document.getElementById("promoFeat3").innerHTML=tr("promo_feat3")+' <span class="promo-detail-btn" onclick="openInfoCountries(event)">'+tr("promo_see")+'</span>';
+  document.getElementById("promoFeat4").innerHTML=tr("promo_feat4")+' <span class="promo-detail-btn" onclick="openInfoProtos(event)">'+tr("promo_see")+'</span>';
+  document.getElementById("promoFeat5").textContent=tr("promo_feat5");
+  document.getElementById("promoPayBtn").textContent=tr("promo_pay_btn");
+  document.getElementById("promoCloseBtn").textContent=tr("promo_close");
+  // ext modal
+  document.getElementById("extCardTitle").textContent=tr("ext_title");
+  document.getElementById("extCloseBtn").textContent=tr("ext_close");
+  if(isPro){
+    document.getElementById("extLockedDiv").style.display="none";
+    document.getElementById("extUnlockedDiv").style.display="block";
+    document.getElementById("extCodeLabel").textContent=tr("ext_code_label");
+    document.getElementById("extSiteText").textContent=tr("ext_site_text");
+  } else {
+    document.getElementById("extLockedDiv").style.display="block";
+    document.getElementById("extUnlockedDiv").style.display="none";
+    document.getElementById("extLockedMsg").textContent=tr("ext_locked");
+    document.getElementById("extLockedSub").textContent=tr("ext_locked_sub");
+  }
+  // info modals
+  document.getElementById("infoCountriesTitle").textContent="✦ "+tr("info_countries_title");
+  document.getElementById("infoCountriesClose").textContent=tr("info_close");
+  document.getElementById("infoProtosTitle").textContent="✦ "+tr("info_protos_title");
+  document.getElementById("infoProtosClose").textContent=tr("info_close");
+  document.getElementById("protoPrivDesc").textContent=tr("proto_priv_desc");
+  document.getElementById("protoWGDesc").textContent=tr("proto_wg_desc");
+  document.getElementById("protoL2tpDesc").textContent=tr("proto_l2tp_desc");
+  document.getElementById("proProtoLabel").textContent=tr("pro_proto_label");
+  // pro proto header lock label
+  renderPingList();
+}
+function toggleTheme(){nightMode=!nightMode;document.getElementById("themeToggle").classList.toggle("on",nightMode);if(!isConnected)document.body.classList.toggle("night",nightMode);}
+
+// PROMO
+function openPromo(){document.getElementById("promoModal").classList.add("open");}
+function closePromo(){document.getElementById("promoModal").classList.remove("open");}
+function promoModalClose(e){if(e.target===document.getElementById("promoModal"))closePromo();}
+function goToPayment(){closePromo();setTimeout(openPayment,220);}
+
+// EXT
+function openExtModal(){document.getElementById("extModal").classList.add("open");}
+function closeExtModal(){document.getElementById("extModal").classList.remove("open");}
+function extModalClose(e){if(e.target===document.getElementById("extModal"))closeExtModal();}
+
+// INFO MODALS
+function openInfoCountries(e){if(e)e.stopPropagation();document.getElementById("infoCountriesModal").classList.add("open");}
+function openInfoProtos(e){if(e)e.stopPropagation();document.getElementById("infoProtosModal").classList.add("open");}
+function closeInfoModal(id){document.getElementById(id).classList.remove("open");}
+function infoModalClose(id,e){if(e.target===document.getElementById(id))closeInfoModal(id);}
+
+// PAYMENT
+function openPayment(){
+  selectedPayMethod=null;
+  var methods=document.getElementById("payMethods");methods.innerHTML="";
+  var PAY_METHODS=[
+    {icon:"💳",key:"visa",label:"Visa / Mastercard"},
+    {icon:"🇷🇺",key:"mir",labelKey:"pay_ru"},
+    {icon:"🅿️",key:"paypal",label:"PayPal"},
+    {icon:"🍎",key:"apple",label:"Apple Pay"},
+    {icon:"🔴",key:"google",label:"Google Pay"},
+    {icon:"₿",key:"crypto",label:"Crypto"}
+  ];
+  PAY_METHODS.forEach(function(m){
+    var d=document.createElement("div");d.className="pay-method";
+    var lbl=m.labelKey?tr(m.labelKey):(m.label||m.key);
+    d.innerHTML='<span class="pay-icon">'+m.icon+'</span><span class="pay-name">'+lbl+'</span><span class="pay-check">✓</span>';
+    (function(key){d.onclick=function(){document.querySelectorAll(".pay-method").forEach(function(el){el.classList.remove("selected");});d.classList.add("selected");selectedPayMethod=key;};})(m.key);
+    methods.appendChild(d);
+  });
+  document.getElementById("payOverlay").classList.add("open");
+}
+function handlePayBtn(){
+  if(!selectedPayMethod){alert(tr("pay_select_warn"));return;}
+  document.getElementById("payOverlay").classList.remove("open");
+  setTimeout(function(){activatePro();alert("✅ "+tr("pay_success"));},300);
+}
+function activatePro(){
+  isPro=true;
+  document.getElementById("proBannerEl").style.display="none";
+  document.getElementById("proActiveBadge").classList.add("show");
+  document.getElementById("speedLocked").style.display="none";
+  document.getElementById("speedMeter").style.display="flex";
+  document.querySelectorAll(".pro-proto-btn").forEach(function(b){b.classList.remove("locked");});
+  applyTranslations();
+}
+
+// SIMPLE
+function openSimple(type){
+  var map={settings:["settings_title","settings_body"],support:["support_title","support_body"],about:["about_title","about_body"]};
+  document.getElementById("simpleTitle").textContent=tr(map[type][0]);
+  document.getElementById("simpleBody").textContent=tr(map[type][1]);
+  document.getElementById("simpleOverlay").classList.add("open");
+}
+
+// FREE PROTOCOL
+function selectProto(btn){
+  if(isConnected||isConnecting)return;
+  document.querySelectorAll(".proto-btn").forEach(function(b){b.classList.remove("active");});
+  btn.classList.add("active");activeProtoIdx=parseInt(btn.dataset.idx);positionSlider(activeProtoIdx);
+}
+function positionSlider(idx){var wrap=document.getElementById("protoWrap");var w=wrap.offsetWidth-10;document.getElementById("protoSlider").style.left=(5+idx*(w/3))+"px";}
+
+// PRO PROTOCOL
+function selectProtoPro(btn){
+  if(!isPro){openPromo();return;}
+  if(isConnected||isConnecting)return;
+  document.querySelectorAll(".pro-proto-btn").forEach(function(b){b.classList.remove("active");});
+  btn.classList.add("active");activeProtoProIdx=parseInt(btn.dataset.idx);positionSliderPro(activeProtoProIdx);
+}
+function positionSliderPro(idx){var wrap=document.getElementById("protoWrapPro");var w=wrap.offsetWidth-10;document.getElementById("protoSliderPro").style.left=(5+idx*(w/3))+"px";}
+
+window.addEventListener("load",function(){positionSlider(0);positionSliderPro(0);});
+window.addEventListener("resize",function(){positionSlider(activeProtoIdx);positionSliderPro(activeProtoProIdx);});
+
+// POWER
+function handlePower(){if(isConnecting)return;isConnected?disconnect():startConnecting();}
+function startConnecting(){
+  isConnecting=true;
+  ["ring1","ring2","ring3"].forEach(function(id){document.getElementById(id).classList.add("searching");});
+  document.getElementById("statusText").textContent=tr("searching");
+  document.getElementById("spinner").classList.add("visible");
+  setTimeout(finishConnecting,3000+Math.random()*3000);
+}
+function finishConnecting(){
+  isConnecting=false;isConnected=true;
+  ["ring1","ring2","ring3"].forEach(function(id){document.getElementById(id).classList.remove("searching");});
+  document.getElementById("spinner").classList.remove("visible");
+  timerSecs=0;updateTimerDisplay();
+  timerInterval=setInterval(function(){timerSecs++;updateTimerDisplay();},1000);
+  document.body.classList.remove("night");document.body.classList.add("connected");
+  var c=COUNTRIES[selectedIdx];
+  document.getElementById("connectedCountry").innerHTML='<img class="flag-img" src="'+c.flag+'" style="width:28px;height:20px;border-radius:4px;">'+cname(selectedIdx);
+  document.getElementById("connectedPing").textContent=pings[c.code]+" мс";
+  var off=document.getElementById("bannerOff"),on=document.getElementById("bannerOn");
+  off.style.transition="opacity 0.5s";off.style.opacity="0";
+  setTimeout(function(){off.style.display="none";on.style.display="flex";on.style.opacity="0";on.style.transition="opacity 0.6s";requestAnimationFrame(function(){requestAnimationFrame(function(){on.style.opacity="1";});});},500);
+}
+function updateTimerDisplay(){
+  var h=Math.floor(timerSecs/3600),m=Math.floor((timerSecs%3600)/60),s=timerSecs%60;
+  function p(n){return String(n).padStart(2,"0");}
+  document.getElementById("statusText").textContent=tr("connected_prefix")+" "+(h>0?(p(h)+":"+p(m)+":"+p(s)):(p(m)+":"+p(s)));
+}
+function disconnect(){
+  isConnected=false;clearInterval(timerInterval);timerInterval=null;
+  document.getElementById("statusText").textContent=tr("disconnected");
+  document.body.classList.remove("connected");if(nightMode)document.body.classList.add("night");
+  var off=document.getElementById("bannerOff"),on=document.getElementById("bannerOn");
+  on.style.transition="opacity 0.5s";on.style.opacity="0";
+  setTimeout(function(){on.style.display="none";off.style.display="flex";off.style.opacity="0";off.style.transition="opacity 0.6s";requestAnimationFrame(function(){requestAnimationFrame(function(){off.style.opacity="1";});});},500);
+}
+
+// SPEED TEST
+function handleSpeedBannerClick(){if(!isPro)return;startSpeedTest();}
+function setNeedle(pct){
+  document.getElementById("speedNeedle").style.transform="rotate("+(-90+pct*180)+"deg)";
+  document.getElementById("speedArc").style.strokeDashoffset=(173-pct*173).toFixed(1);
+}
+function startSpeedTest(){
+  if(speedRunning)return;speedRunning=true;
+  setNeedle(0);
+  document.getElementById("speedDialTxt").textContent="0";
+  document.getElementById("dlVal").textContent="—";
+  document.getElementById("ulVal").textContent="—";
+  document.getElementById("pingVal").textContent="—";
+  document.getElementById("speedIdle").style.display="none";
+  document.getElementById("speedDyn").style.display="flex";
+  document.getElementById("speedSubTitle").textContent=tr("speed_testing_dl");
+  var tDL=(Math.random()*45+3).toFixed(2),tUL=(Math.random()*30+2).toFixed(2),tPing=Math.floor(Math.random()*180+30);
+  var elapsed=0,phaseDur=2800;
+  function animDL(){
+    var t=Math.min(elapsed/phaseDur,1),e2=t<0.5?2*t*t:-1+(4-2*t)*t;
+    var cur=Math.max(0,parseFloat(tDL)*(e2+(Math.random()-0.5)*0.08*(1-t)));
+    setNeedle(Math.min(cur/100,1));document.getElementById("speedDialTxt").textContent=cur.toFixed(1);
+    if(t>=1){
+      document.getElementById("dlVal").textContent=tDL;setNeedle(parseFloat(tDL)/100);document.getElementById("speedDialTxt").textContent=tDL;
+      document.getElementById("pingVal").textContent=tPing;elapsed=0;
+      document.getElementById("speedSubTitle").textContent=tr("speed_testing_ul");
+      speedTimer=setInterval(function(){elapsed+=60;animUL();},60);return;
+    }elapsed+=60;
+  }
+  function animUL(){
+    var t=Math.min(elapsed/phaseDur,1),e2=t<0.5?2*t*t:-1+(4-2*t)*t;
+    var cur=Math.max(0,parseFloat(tUL)*(e2+(Math.random()-0.5)*0.08*(1-t)));
+    setNeedle(Math.min(cur/100,1));document.getElementById("speedDialTxt").textContent=cur.toFixed(1);
+    if(t>=1){
+      clearInterval(speedTimer);document.getElementById("ulVal").textContent=tUL;setNeedle(parseFloat(tUL)/100);document.getElementById("speedDialTxt").textContent=tUL;
+      document.getElementById("speedSubTitle").textContent=tr("speed_done");speedRunning=false;
+      setTimeout(function(){
+        document.getElementById("speedIdle").style.display="flex";
+        document.getElementById("speedDyn").style.display="none";
+        document.getElementById("speedSubTitle").textContent=tr("speed_hint");
+        setNeedle(0);document.getElementById("speedDialTxt").textContent="—";
+      },4000);
+      return;
+    }elapsed+=60;
+  }
+  setTimeout(function(){document.getElementById("pingVal").textContent=tPing;},600);
+  elapsed=0;speedTimer=setInterval(function(){elapsed+=60;animDL();},60);
+}
+
+// SPLASH
+(function(){
+  setTimeout(function(){
+    var s=document.getElementById("splash");
+    if(s){s.classList.add("hide");setTimeout(function(){s.style.display="none";},420);}
+  },2600);
+})();
+
+refreshPings();setInterval(refreshPings,5000);applyTranslations();
+</script>
+</body>
+</html>
